@@ -121,6 +121,7 @@ import org.jetbrains.kotlin.jvm.runtime.AbstractJvmRuntimeDescriptorLoaderTest
 import org.jetbrains.kotlin.kdoc.AbstractKDocLexerTest
 import org.jetbrains.kotlin.lang.resolve.android.test.AbstractAndroidBoxTest
 import org.jetbrains.kotlin.lang.resolve.android.test.AbstractAndroidBytecodeShapeTest
+import org.jetbrains.kotlin.lang.resolve.android.test.AbstractAndroidExtensionsAsmListingTest
 import org.jetbrains.kotlin.lang.resolve.android.test.AbstractAndroidSyntheticPropertyDescriptorTest
 import org.jetbrains.kotlin.modules.xml.AbstractModuleXmlParserTest
 import org.jetbrains.kotlin.parsing.AbstractParsingTest
@@ -997,6 +998,10 @@ fun main(args: Array<String>) {
 
         testClass<AbstractAndroidBytecodeShapeTest>() {
             model("codegen/bytecodeShape", recursive = false, extension = null)
+        }
+
+        testClass<AbstractAndroidExtensionsAsmListingTest>() {
+            model("codegen/asmListing", recursive = false, extension = null)
         }
     }
 
