@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.descriptorUtil.hasDefaultValue
+import org.jetbrains.kotlin.util.CheckResult
+import org.jetbrains.kotlin.util.InfixChecks
 
 class InfixModifierChecker : DeclarationChecker {
 
@@ -36,8 +38,11 @@ class InfixModifierChecker : DeclarationChecker {
         if (!functionDescriptor.isInfix) return
         val modifier = declaration.modifierList?.getModifier(KtTokens.INFIX_KEYWORD) ?: return
 
+        val checkResult = InfixChecks.check(functionDescriptor)
+        if (checkResult !is CheckResult.IllegalSignature) return
+        
         if (!isApplicable(functionDescriptor)) {
-            diagnosticHolder.report(Errors.INAPPLICABLE_INFIX_MODIFIER.on(modifier))
+            diagnosticHolder.report(Errors.INAPPLICABLE_INFIX_MODIFIER.on(modifier, checkResult.error))
         }
     }
 

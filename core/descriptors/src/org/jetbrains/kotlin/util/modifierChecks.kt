@@ -87,6 +87,13 @@ sealed class ValueParameterCountCheck(override val description: String) : Check 
     }
 }
 
+private object HasDispatchOrExtensionReceiverParameter : Check {
+    override val description = "should have a dispatch parameter or be an extension function"
+    override fun check(functionDescriptor: FunctionDescriptor): Boolean {
+        return functionDescriptor.dispatchReceiverParameter != null || functionDescriptor.extensionReceiverParameter != null
+    }
+}
+
 private object NoDefaultAndVarargsCheck : Check {
     override val description = "should not have varargs or parameters with default values"
     override fun check(functionDescriptor: FunctionDescriptor) =
@@ -110,7 +117,7 @@ sealed class ReturnsCheck(val name: String, val type: KotlinBuiltIns.() -> Kotli
     object ReturnsUnit : ReturnsCheck("Unit", { unitType })
 }
 
-private class Checks private constructor(
+internal class Checks private constructor(
         val name: Name?,
         val regex: Regex?,
         val nameList: Collection<Name>?,
@@ -140,6 +147,8 @@ private class Checks private constructor(
         return CheckResult.SuccessCheck
     }
 
+    constructor(vararg checks: Check, additionalChecks: FunctionDescriptor.() -> String? = { null })
+            : this(null, null, null, additionalChecks, *checks)
     constructor(name: Name, vararg checks: Check, additionalChecks: FunctionDescriptor.() -> String? = { null })
             : this(name, null, null, additionalChecks, *checks)
     constructor(regex: Regex, vararg checks: Check, additionalChecks: FunctionDescriptor.() -> String? = { null })
@@ -148,10 +157,23 @@ private class Checks private constructor(
             : this(null, null, nameList, additionalChecks, *checks)
 }
 
-object OperatorChecks {
-    private inline fun ensure(cond: Boolean, msg: () -> String) = if (!cond) msg() else null
+abstract class AbstractModifierChecks {
+    abstract internal val checks: List<Checks>
+    
+    inline fun ensure(cond: Boolean, msg: () -> String) = if (!cond) msg() else null
 
-    private val CHECKS = listOf(
+    fun check(functionDescriptor: FunctionDescriptor): CheckResult {
+        for (check in checks) {
+            if (!check.isApplicable(functionDescriptor)) continue
+            return check.checkAll(functionDescriptor)
+        }
+
+        return CheckResult.IllegalFunctionName
+    }
+}
+
+object OperatorChecks : AbstractModifierChecks() {
+    override val checks = listOf(
             Checks(GET, MemberOrExtension, ValueParameterCountCheck.AtLeast(1)),
             Checks(SET, MemberOrExtension, ValueParameterCountCheck.AtLeast(2)) {
                 val lastIsOk = valueParameters.lastOrNull()?.let { !it.hasDefaultValue() && it.varargElementType == null } ?: false
@@ -181,15 +203,11 @@ object OperatorChecks {
             Checks(ASSIGNMENT_OPERATIONS, MemberOrExtension, ReturnsUnit, SingleValueParameter, NoDefaultAndVarargsCheck),
             Checks(COMPONENT_REGEX, MemberOrExtension, NoValueParameters)
     )
-
-    fun checkOperator(functionDescriptor: FunctionDescriptor): CheckResult {
-        for (check in CHECKS) {
-            if (!check.isApplicable(functionDescriptor)) continue
-            return check.checkAll(functionDescriptor)
-        }
-
-        return CheckResult.IllegalFunctionName
-    }
 }
 
-fun FunctionDescriptor.isValidOperator() = isOperator && OperatorChecks.checkOperator(this).isSuccess
+object InfixChecks : AbstractModifierChecks() {
+    override val checks = listOf(
+            Checks(HasDispatchOrExtensionReceiverParameter, SingleValueParameter, NoDefaultAndVarargsCheck))
+}
+
+fun FunctionDescriptor.isValidOperator() = isOperator && OperatorChecks.check(this).isSuccess
