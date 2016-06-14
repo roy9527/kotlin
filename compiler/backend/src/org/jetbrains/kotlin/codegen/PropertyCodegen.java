@@ -505,6 +505,7 @@ public class PropertyCodegen {
         }
     }
 
+
     public static StackValue invokeDelegatedPropertyConventionMethod(
             @NotNull PropertyDescriptor propertyDescriptor,
             @NotNull ExpressionCodegen codegen,
