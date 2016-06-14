@@ -21,7 +21,6 @@ import com.intellij.codeInsight.template.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
@@ -45,11 +44,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.singletonList
 import org.jetbrains.kotlin.utils.ifEmpty
 
 class SpecifyTypeExplicitlyIntention :
-        SelfTargetingRangeIntention<PsiElement>(PsiElement::class.java, "Specify type explicitly"),
+        SelfTargetingRangeIntention<KtCallableDeclaration>(KtCallableDeclaration::class.java, "Specify type explicitly"),
         LowPriorityAction {
 
-    override fun applicabilityRange(element: PsiElement): TextRange? {
-        if (element !is KtCallableDeclaration) return null
+    override fun applicabilityRange(element: KtCallableDeclaration): TextRange? {
         if (element.containingFile is KtCodeFragment) return null
         if (element is KtFunctionLiteral) return null // TODO: should KtFunctionLiteral be KtCallableDeclaration at all?
         if (element is KtConstructor<*>) return null
@@ -70,8 +68,7 @@ class SpecifyTypeExplicitlyIntention :
         }
     }
 
-    override fun applyTo(element: PsiElement, editor: Editor?) {
-        if (element !is KtCallableDeclaration) return
+    override fun applyTo(element: KtCallableDeclaration, editor: Editor?) {
         val type = getTypeForDeclaration(element)
         addTypeAnnotation(editor, element, type)
     }
