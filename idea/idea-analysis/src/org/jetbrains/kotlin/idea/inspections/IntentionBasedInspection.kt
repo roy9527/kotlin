@@ -85,42 +85,42 @@ abstract class IntentionBasedInspection<TElement : PsiElement>(
 
     protected open val problemHighlightType: ProblemHighlightType
         get() = ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+}
 
-    /* we implement IntentionAction to provide isAvailable which will be used to hide outdated items and make sure we never call 'invoke' for such item */
-    private class IntentionBasedQuickFix<TElement : PsiElement>(
-            private val intention: SelfTargetingRangeIntention<TElement>,
-            private val text: String,
-            private val additionalChecker: (TElement) -> Boolean,
-            targetElement: TElement
-    ) : LocalQuickFixOnPsiElement(targetElement), IntentionAction {
+/* we implement IntentionAction to provide isAvailable which will be used to hide outdated items and make sure we never call 'invoke' for such item */
+class IntentionBasedQuickFix<TElement : PsiElement>(
+        private val intention: SelfTargetingRangeIntention<TElement>,
+        private val text: String,
+        private val additionalChecker: (TElement) -> Boolean,
+        targetElement: TElement
+) : LocalQuickFixOnPsiElement(targetElement), IntentionAction {
 
-        // store text into variable because intention instance is shared and may change its text later
-        override fun getFamilyName() = intention.familyName
+    // store text into variable because intention instance is shared and may change its text later
+    override fun getFamilyName() = intention.familyName
 
-        override fun getText(): String = text
+    override fun getText(): String = text
 
-        override fun startInWriteAction() = true
+    override fun startInWriteAction() = true
 
-        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = isAvailable()
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = isAvailable
 
-        override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
-            assert(startElement == endElement)
-            return intention.applicabilityRange(startElement as TElement) != null && additionalChecker(startElement)
-        }
+    override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
+        assert(startElement == endElement)
+        return intention.applicabilityRange(startElement as TElement) != null && additionalChecker(startElement)
+    }
 
-        override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-            PsiDocumentManager.getInstance(project).commitAllDocuments()
-            applyFix()
-        }
+    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+        applyFix()
+    }
 
-        override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-            assert(startElement == endElement)
-            if (!isAvailable(project, file, startElement, endElement)) return
+    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+        assert(startElement == endElement)
+        if (!isAvailable(project, file, startElement, endElement)) return
 
-            val editor = startElement.findExistingEditor()
-            editor?.caretModel?.moveToOffset(startElement.textOffset)
-            intention.applyTo(startElement as TElement, editor)
-        }
+        val editor = startElement.findExistingEditor()
+        editor?.caretModel?.moveToOffset(startElement.textOffset)
+        intention.applyTo(startElement as TElement, editor)
     }
 }
 
