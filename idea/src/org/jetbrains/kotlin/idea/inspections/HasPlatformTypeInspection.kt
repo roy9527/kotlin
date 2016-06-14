@@ -19,7 +19,7 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.options.BeanConfigurable
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -37,14 +37,8 @@ import org.jetbrains.kotlin.types.isNullabilityFlexible
 import javax.swing.JComponent
 
 class HasPlatformTypeInspection(
-        @get:JvmName("isPublicAPIOnly") @set:JvmName("setPublicAPIOnly") var publicAPIOnly: Boolean = false
+        @JvmField var publicAPIOnly: Boolean = true
 ) : AbstractKotlinInspection() {
-
-    inner class BeanConfigurablePanel : BeanConfigurable<HasPlatformTypeInspection>(this) {
-        init {
-            checkBox("publicAPIOnly", "Apply only to public or protected members")
-        }
-    }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : KtVisitorVoid() {
@@ -94,6 +88,8 @@ class HasPlatformTypeInspection(
     }
 
     override fun createOptionsPanel(): JComponent? {
-        return BeanConfigurablePanel().createComponent()
+        val panel = MultipleCheckboxOptionsPanel(this)
+        panel.addCheckbox("Apply only to public or protected members", "publicAPIOnly")
+        return panel
     }
 }
