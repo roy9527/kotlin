@@ -44,6 +44,6 @@ object JsPlatformConfigurator : PlatformConfigurator(
         container.useInstance(SyntheticScopes.Empty)
         container.useInstance(JsTypeSpecificityComparator)
         container.useInstance(JsNameClashChecker())
-        container.useInstance(OverriddenJsNameChecker())
+        //container.useInstance(OverriddenJsNameChecker())
     }
 }
