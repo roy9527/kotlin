@@ -17,57 +17,67 @@
 package org.jetbrains.kotlin.annotation.processing
 
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.search.GlobalSearchScope
+import com.sun.tools.javac.util.Constants
 import org.jetbrains.kotlin.java.model.*
+import org.jetbrains.kotlin.java.model.impl.JeAnnotationMirror
+import org.jetbrains.kotlin.java.model.impl.JeExecutableElement
+import org.jetbrains.kotlin.java.model.impl.JeTypeElement
+import java.io.PrintWriter
 import java.io.Writer
 import javax.lang.model.element.*
 import javax.lang.model.util.Elements
 
-class KotlinElements(val javaPsiFacade: JavaPsiFacade) : Elements {
+class KotlinElements(val javaPsiFacade: JavaPsiFacade, val scope: GlobalSearchScope) : Elements {
     override fun hides(hider: Element?, hidden: Element?): Boolean {
         throw UnsupportedOperationException()
     }
 
     override fun overrides(overrider: ExecutableElement?, overridden: ExecutableElement?, type: TypeElement?): Boolean {
-        throw UnsupportedOperationException()
+        val jeOverrider = overrider as? JeExecutableElement ?: return false
+        val jeOverridden = overridden as? JeExecutableElement ?: return false
+        
+        
     }
 
     override fun getName(cs: CharSequence?) = JeName(cs?.toString())
 
-    override fun getElementValuesWithDefaults(a: AnnotationMirror?): MutableMap<out ExecutableElement, out AnnotationValue>? {
-        throw UnsupportedOperationException()
+    override fun getElementValuesWithDefaults(a: AnnotationMirror?): Map<out ExecutableElement, AnnotationValue> {
+        val jeAnnotation = a as? JeAnnotationMirror ?: return emptyMap()
+        return jeAnnotation.getAllElementValues()
     }
 
-    override fun getBinaryName(type: TypeElement?): Name? {
-        throw UnsupportedOperationException()
+    override fun getBinaryName(type: TypeElement?) = JeName((type as JeTypeElement).psi.qualifiedName)
+
+    override fun getDocComment(e: Element?) = ""
+
+    override fun isDeprecated(e: Element?): Boolean {
+        return (e as? JeAnnotationOwner)?.annotationOwner?.findAnnotation("java.lang.Deprecated") != null
     }
 
-    override fun getDocComment(e: Element?): String? {
-        throw UnsupportedOperationException()
+    override fun getAllMembers(type: TypeElement?): List<Element> {
+        val jeTypeElement = type as? JeTypeElement ?: return emptyList()
+        return jeTypeElement.getAllMembers();
     }
 
-    override fun isDeprecated(e: Element?) = (e as? JeAnnotationOwner)?.annotationOwner?.findAnnotation("java.lang.Deprecated") != null
-
-    override fun getAllMembers(type: TypeElement?): MutableList<out Element>? {
-        throw UnsupportedOperationException()
+    override fun printElements(w: Writer, vararg elements: Element) {
+        val printWriter = PrintWriter(w)
+        for (element in elements) {
+            printWriter.println(element.simpleName.toString() + " (" + element.javaClass.name + ")")
+        }
     }
 
-    override fun printElements(w: Writer?, vararg elements: Element?) {
-        throw UnsupportedOperationException()
-    }
-
-    override fun getPackageElement(name: CharSequence?): PackageElement? {
-        
-        throw UnsupportedOperationException()
+    override fun getPackageElement(name: CharSequence): PackageElement? {
+        val psiPackage = javaPsiFacade.findPackage(name.toString()) ?: return null
+        return JeConverter.convertPackage(psiPackage)
     }
 
     override fun getTypeElement(name: CharSequence): TypeElement? {
-        
-        throw UnsupportedOperationException()
+        val psiClass = javaPsiFacade.findClass(name.toString(), scope) ?: return null
+        return JeConverter.convertClass(psiClass)
     }
 
-    override fun getConstantExpression(value: Any?): String? {
-        throw UnsupportedOperationException()
-    }
+    override fun getConstantExpression(value: Any?) = Constants.format(value)
 
     override tailrec fun getPackageOf(element: Element): PackageElement? {
         if (element is PackageElement) return element
@@ -75,7 +85,7 @@ class KotlinElements(val javaPsiFacade: JavaPsiFacade) : Elements {
         return getPackageOf(parent)
     }
 
-    override fun getAllAnnotationMirrors(e: Element?): MutableList<out AnnotationMirror>? {
+    override fun getAllAnnotationMirrors(e: Element?): List<AnnotationMirror> {
         throw UnsupportedOperationException()
     }
 }

@@ -52,13 +52,21 @@ class JeTypeElement(override val psi: PsiClass) : JeElement(), TypeElement, JeAn
         else -> NestingKind.LOCAL
     }
 
-    override fun getEnclosedElements(): MutableList<out Element>? {
+    override fun getEnclosedElements(): List<Element> {
         val declarations = mutableListOf<Element>()
         psi.initializers.forEach { declarations += JeClassInitializerExecutableElement(it) }
         psi.constructors.forEach { declarations += JeExecutableElement(it) }
         psi.fields.forEach { declarations += JeVariableElement(it) }
         psi.methods.forEach { declarations += JeExecutableElement(it) }
         psi.innerClasses.forEach { declarations += JeTypeElement(it) }
+        return declarations
+    }
+    
+    fun getAllMembers(): List<Element> {
+        val declarations = mutableListOf<Element>()
+        psi.constructors.forEach { declarations += JeExecutableElement(it) }
+        psi.fields.forEach { declarations += JeVariableElement(it) }
+        psi.methods.forEach { declarations += JeExecutableElement(it) }
         return declarations
     }
 

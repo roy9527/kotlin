@@ -30,7 +30,11 @@ class JeAnnotationMirror(val psi: PsiAnnotation) : AnnotationMirror {
         return JeDeclaredType(PsiTypesUtil.getClassType(psiClass))
     }
 
-    override fun getElementValues(): MutableMap<out ExecutableElement, out AnnotationValue>? {
+    override fun getElementValues(): Map<out ExecutableElement, AnnotationValue> {
         throw UnsupportedOperationException()
+    }
+    
+    fun getAllElementValues(): Map<out ExecutableElement, AnnotationValue> {
+        throw UnsupportedOperationException()   
     }
 }

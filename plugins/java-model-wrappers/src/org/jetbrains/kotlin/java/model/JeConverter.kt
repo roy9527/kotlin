@@ -23,13 +23,17 @@ import javax.lang.model.element.Element
 object JeConverter {
     fun convert(psi: PsiElement?) = when (psi) {
         null -> null
-        is PsiPackage -> JePackageElement(psi)
-        is PsiClass -> JeTypeElement(psi)
+        is PsiPackage -> convertPackage(psi)
+        is PsiClass -> convertClass(psi)
         is PsiVariable -> JeVariableElement(psi)
         is PsiMethod -> JeExecutableElement(psi)
         is PsiClassInitializer -> JeClassInitializerExecutableElement(psi)
         else -> null
     }
+    
+    fun convertPackage(psiPackage: PsiPackage) = JePackageElement(psiPackage)
+    
+    fun convertClass(psiClass: PsiClass) = JeTypeElement(psiClass)
     
     tailrec fun convertAppropriateParent(psi: PsiElement?): Element? {
         val parent = psi?.parent ?: return null

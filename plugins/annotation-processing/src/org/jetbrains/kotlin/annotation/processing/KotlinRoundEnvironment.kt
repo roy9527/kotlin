@@ -21,6 +21,8 @@ import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 
 class KotlinRoundEnvironment : RoundEnvironment {
+    private var isError = false
+    
     override fun getRootElements(): MutableSet<out Element>? {
         throw UnsupportedOperationException()
     }
@@ -37,7 +39,5 @@ class KotlinRoundEnvironment : RoundEnvironment {
         throw UnsupportedOperationException()
     }
 
-    override fun errorRaised(): Boolean {
-        throw UnsupportedOperationException()
-    }
+    override fun errorRaised() = isError
 }
