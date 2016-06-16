@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.annotation.processing
+package org.jetbrains.kotlin.annotation.processing.impl
 
 import java.util.*
 import javax.annotation.processing.ProcessingEnvironment
 import javax.lang.model.SourceVersion
 
 class KotlinProcessingEnvironment(
-        private val elements: KotlinElements, 
+        private val elements: KotlinElements,
         private val types: KotlinTypes,
         private val messager: KotlinMessager,
         options: Map<String, String>,

@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.annotation.processing
+package org.jetbrains.kotlin.annotation.processing.impl
 
+import java.io.File
 import javax.annotation.processing.Filer
 import javax.lang.model.element.Element
 import javax.tools.FileObject
 import javax.tools.JavaFileManager
 import javax.tools.JavaFileObject
 
-class KotlinFiler : Filer {
-    override fun createSourceFile(name: CharSequence, vararg originatingElements: Element?): JavaFileObject? {
-        throw UnsupportedOperationException()
+class KotlinFiler(val generatedDir: File) : Filer {
+    private fun getSourceOrClassFileName(name: CharSequence) = if (name.endsWith(".package-info")) name.toString() else "$name.java"
+    
+    override fun createSourceFile(name: CharSequence, vararg originatingElements: Element?): JavaFileObject {
+        return KotlinJavaFileObject(File(generatedDir, getSourceOrClassFileName(name)))
     }
 
     override fun getResource(location: JavaFileManager.Location, pkg: CharSequence, relativeName: CharSequence): FileObject? {
@@ -32,15 +35,15 @@ class KotlinFiler : Filer {
     }
 
     override fun createResource(
-            location: JavaFileManager.Location?, 
-            pkg: CharSequence, 
-            relativeName: CharSequence, 
+            location: JavaFileManager.Location?,
+            pkg: CharSequence,
+            relativeName: CharSequence,
             vararg originatingElements: Element?
     ): FileObject? {
         throw UnsupportedOperationException()
     }
 
-    override fun createClassFile(name: CharSequence, vararg originatingElements: Element?): JavaFileObject? {
-        throw UnsupportedOperationException()
+    override fun createClassFile(name: CharSequence, vararg originatingElements: Element?): JavaFileObject {
+        return KotlinJavaFileObject(File(generatedDir, getSourceOrClassFileName(name)))
     }
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.annotation.processing
+package org.jetbrains.kotlin.annotation.processing.impl
 
 import javax.annotation.processing.Messager
 import javax.lang.model.element.AnnotationMirror

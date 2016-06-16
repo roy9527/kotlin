@@ -138,6 +138,7 @@ class Kotlin2JvmSourceSetProcessor(
         }
 
         val aptConfiguration = project.createAptConfiguration(sourceSet.name, kotlinAnnotationProcessingDep)
+        val kapt2Configuration = project.createKapt2Configuration(sourceSet.name)
 
         project.afterEvaluate { project ->
             if (project != null) {
@@ -506,8 +507,8 @@ private fun loadSubplugins(project: Project): SubpluginEnvironment {
                         val id = it.moduleVersion.id
                         subplugin.getGroupName() == id.group && subplugin.getArtifactName() == id.name
                     }?.file
-            if (file != null) {
-                subpluginClasspaths.put(subplugin, listOf(file))
+            if (file != null || subplugin.isBundled) {
+                subpluginClasspaths.put(subplugin, if (file != null) listOf(file) else emptyList())
             }
         }
 
@@ -586,6 +587,11 @@ private fun Project.getAptDirsForSourceSet(sourceSetName: String): Pair<File, Fi
     val aptWorkingDirForVariant = File(aptWorkingDir, sourceSetName)
 
     return aptOutputDirForVariant to aptWorkingDirForVariant
+}
+
+private fun Project.createKapt2Configuration(sourceSetName: String): Configuration {
+    val aptConfigurationName = if (sourceSetName != "main") "kapt2${sourceSetName.capitalize()}" else "kapt2"
+    return configurations.create(aptConfigurationName)
 }
 
 private fun Project.createAptConfiguration(sourceSetName: String, kotlinAnnotationProcessingDep: String): Configuration {

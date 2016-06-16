@@ -14,24 +14,27 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.annotation.processing
+package org.jetbrains.kotlin.annotation.processing.impl
 
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.kotlin.java.model.impl.*
 import javax.lang.model.element.Element
-import javax.lang.model.element.ExecutableElement
 import javax.lang.model.element.TypeElement
 import javax.lang.model.type.*
 import javax.lang.model.util.Types
 
 class KotlinTypes(val javaPsiFacade: JavaPsiFacade, val scope: GlobalSearchScope) : Types {
     override fun contains(t1: TypeMirror, t2: TypeMirror): Boolean {
-        //TODO support type arguments
-        return false
+        t1 as? JeAbstractType ?: return false
+        t2 as? JeAbstractType ?: return false
+        
+        val classType = t1.psi as? PsiClassType ?: return false
+        return t2.psi in classType.parameters
     }
 
     override fun getArrayType(componentType: TypeMirror) = JeArrayTypeWithComponent(componentType)
@@ -87,14 +90,10 @@ class KotlinTypes(val javaPsiFacade: JavaPsiFacade, val scope: GlobalSearchScope
     override fun getDeclaredType(typeElem: TypeElement, vararg typeArgs: TypeMirror) = JeCompoundDeclaredType(typeElem, typeArgs.toList())
 
     override fun getDeclaredType(containing: DeclaredType?, typeElem: TypeElement, vararg typeArgs: TypeMirror): DeclaredType? {
-        //TODO
-        return getDeclaredType(typeElem, *typeArgs)
+        TODO()
     }
 
-    override fun asMemberOf(containing: DeclaredType, element: Element) = when (element) {
-        is JeExecutableElement -> JeExecutableTypeMirror(element.psi) 
-        is JeVariableElement -> 
-    }
+    override fun asMemberOf(containing: DeclaredType, element: Element) = TODO()
 
     override fun isSameType(t1: TypeMirror, t2: TypeMirror): Boolean {
         if (t1 === t2) return true
@@ -106,11 +105,11 @@ class KotlinTypes(val javaPsiFacade: JavaPsiFacade, val scope: GlobalSearchScope
     override fun getNoType(kind: TypeKind) = CustomJeNoneType(kind)
 
     override fun isSubsignature(m1: ExecutableType, m2: ExecutableType): Boolean {
-        throw UnsupportedOperationException()
+        TODO()
     }
 
     override fun capture(t: TypeMirror): TypeMirror? {
-        throw UnsupportedOperationException()
+        TODO()
     }
 
     override fun asElement(t: TypeMirror): Element? {

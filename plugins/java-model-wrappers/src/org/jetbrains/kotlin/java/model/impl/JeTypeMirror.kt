@@ -85,9 +85,30 @@ fun JeTypeMirror(psi: PsiType): TypeMirror = when (psi) {
     PsiType.NULL -> JeNullType
     is PsiArrayType -> JeArrayType(psi)
     is PsiWildcardType -> JeWildcardType(psi)
-    is PsiClassType -> JeDeclaredType(psi)
+    is PsiClassType -> {
+        val resolvedClass = psi.resolve()
+        when (resolvedClass) {
+            is PsiTypeParameter -> JeTypeVariableType(psi, resolvedClass)
+            is PsiClass -> JeDeclaredType(psi, resolvedClass)
+            else -> JeErrorType
+        }
+    }
     is PsiIntersectionType -> JeIntersectionType(psi)
     else -> JeErrorType
+}
+
+class JeTypeVariableType(override val psi: PsiClassType, val parameter: PsiTypeParameter) : JeAbstractType(), TypeVariable {
+    override fun getKind() = TypeKind.TYPEVAR
+
+    override fun getLowerBound(): TypeMirror? {
+        TODO()
+    }
+
+    override fun getUpperBound(): TypeMirror? {
+        TODO()
+    }
+
+    override fun asElement() = JeTypeElement(parameter)
 }
 
 object JeNullType : JeAbstractType(), NullType {
@@ -122,15 +143,15 @@ class JeIntersectionType(override val psi: PsiIntersectionType) : JeAbstractType
     override fun getBounds() = psi.superTypes.map { JeTypeMirror(it) }
 }
 
-class JeDeclaredType(override val psi: PsiClassType) : JeAbstractType(), DeclaredType {
+class JeDeclaredType(override val psi: PsiClassType, val clazz: PsiClass) : JeAbstractType(), DeclaredType {
     override fun getKind() = TypeKind.DECLARED
     
     override fun getTypeArguments() = psi.parameters.map { JeTypeMirror(it) }
 
-    override fun asElement() = psi.resolve()?.let { JeTypeElement(it) }
+    override fun asElement() = JeTypeElement(clazz)
 
     override fun getEnclosingType(): TypeMirror {
-        val psiClass = psi.resolve()?.containingClass ?: return JeNoneType
+        val psiClass = clazz.containingClass ?: return JeNoneType
         return JeTypeMirror(PsiTypesUtil.getClassType(psiClass))
     }
 }

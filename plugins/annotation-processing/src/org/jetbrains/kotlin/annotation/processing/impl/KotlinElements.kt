@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.annotation.processing
+package org.jetbrains.kotlin.annotation.processing.impl
 
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
@@ -55,7 +55,6 @@ class KotlinElements(val javaPsiFacade: JavaPsiFacade, val scope: GlobalSearchSc
     override fun overrides(overrider: ExecutableElement, overridden: ExecutableElement, type: TypeElement): Boolean {
         overrider as? JeExecutableElement ?: return false
         overridden as? JeExecutableElement ?: return false
-        if (type == null) return false
         
         return PsiSuperMethodUtil.isSuperMethod(overrider.psi, overridden.psi)
     }

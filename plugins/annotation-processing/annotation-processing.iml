@@ -10,5 +10,8 @@
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="java-model-wrappers" />
     <orderEntry type="library" name="intellij-core" level="project" />
+    <orderEntry type="module" module-name="frontend" />
+    <orderEntry type="module" module-name="frontend.java" />
+    <orderEntry type="module" module-name="light-classes" />
   </component>
 </module>
