@@ -23,7 +23,7 @@ import javax.lang.model.element.TypeElement
 class KotlinRoundEnvironment : RoundEnvironment {
     private var isError = false
     
-    override fun getRootElements(): MutableSet<out Element>? {
+    override fun getRootElements(): Set<Element> {
         throw UnsupportedOperationException()
     }
 
@@ -31,11 +31,11 @@ class KotlinRoundEnvironment : RoundEnvironment {
         throw UnsupportedOperationException()
     }
 
-    override fun getElementsAnnotatedWith(a: TypeElement?): MutableSet<out Element>? {
+    override fun getElementsAnnotatedWith(a: TypeElement?): Set<Element> {
         throw UnsupportedOperationException()
     }
 
-    override fun getElementsAnnotatedWith(a: Class<out Annotation>?): MutableSet<out Element>? {
+    override fun getElementsAnnotatedWith(a: Class<out Annotation>?): Set<Element> {
         throw UnsupportedOperationException()
     }
 

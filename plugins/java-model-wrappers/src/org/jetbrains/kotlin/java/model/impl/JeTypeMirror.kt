@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+@file:JvmName("JeTypeUtils")
 package org.jetbrains.kotlin.java.model.impl
 
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import javax.lang.model.element.AnnotationMirror
+import javax.lang.model.element.Element
+import javax.lang.model.element.TypeElement
 import javax.lang.model.type.*
 import java.lang.reflect.Array as RArray
 
@@ -57,9 +59,30 @@ abstract class JeAbstractType : JeTypeBase() {
     }
 }
 
+private val PSI_PRIMITIVES_MAP = listOf(
+        PsiType.BYTE, PsiType.CHAR, PsiType.DOUBLE, 
+        PsiType.FLOAT, PsiType.INT, PsiType.LONG, 
+        PsiType.SHORT, PsiType.BOOLEAN, PsiType.VOID).associate { it to JePrimitiveType(it) }
+
+private val TYPE_KIND_TO_PSI_PRIMITIVE_MAP = mapOf(
+        TypeKind.BYTE to PsiType.BYTE,
+        TypeKind.CHAR to PsiType.CHAR,
+        TypeKind.DOUBLE to PsiType.DOUBLE,
+        TypeKind.FLOAT to PsiType.FLOAT,
+        TypeKind.INT to PsiType.INT,
+        TypeKind.LONG to PsiType.LONG,
+        TypeKind.SHORT to PsiType.SHORT,
+        TypeKind.BOOLEAN to PsiType.BOOLEAN, 
+        TypeKind.VOID to PsiType.VOID)
+
+fun getJePrimitiveType(kind: TypeKind?) = PSI_PRIMITIVES_MAP[TYPE_KIND_TO_PSI_PRIMITIVE_MAP[kind]]
+
+fun getJePrimitiveType(psi: PsiType) = PSI_PRIMITIVES_MAP[psi]
+
+//TODO type variables
 fun JeTypeMirror(psi: PsiType): TypeMirror = when (psi) {
-    is PsiPrimitiveType -> JePrimitiveType(psi)
-    PsiType.NULL -> JeNullType(psi)
+    is PsiPrimitiveType -> PSI_PRIMITIVES_MAP[psi] ?: JeErrorType
+    PsiType.NULL -> JeNullType
     is PsiArrayType -> JeArrayType(psi)
     is PsiWildcardType -> JeWildcardType(psi)
     is PsiClassType -> JeDeclaredType(psi)
@@ -67,22 +90,34 @@ fun JeTypeMirror(psi: PsiType): TypeMirror = when (psi) {
     else -> JeErrorType
 }
 
-private class JeNullType(override val psi: PsiType) : JeAbstractType(), NullType {
+object JeNullType : JeAbstractType(), NullType {
+    override val psi = PsiType.NULL
     override fun getKind() = TypeKind.NULL
 }
 
-private class JeArrayType(override val psi: PsiArrayType) : JeAbstractType(), ArrayType {
+class JeArrayType(override val psi: PsiArrayType) : JeAbstractType(), ArrayType {
     override fun getKind() = TypeKind.ARRAY
     override fun getComponentType() = JeTypeMirror(psi.componentType)
 }
 
-private class JeWildcardType(override val psi: PsiWildcardType) : JeAbstractType(), WildcardType {
+class JeArrayTypeWithComponent(private val _componentType: TypeMirror?) : JeTypeBase(), ArrayType {
+    override fun getKind() = TypeKind.ARRAY
+    override fun getComponentType() = _componentType
+}
+
+class JeWildcardType(override val psi: PsiWildcardType) : JeAbstractType(), WildcardType {
     override fun getKind() = TypeKind.WILDCARD
     override fun getSuperBound() = JeTypeMirror(psi.superBound)
     override fun getExtendsBound() = JeTypeMirror(psi.extendsBound)
 }
 
-private class JeIntersectionType(override val psi: PsiIntersectionType) : JeAbstractType(), IntersectionType {
+class JeWildcardTypeWithBounds(private val _extendsBound: TypeMirror, private val _superBound: TypeMirror) : JeTypeBase(), WildcardType {
+    override fun getKind() = TypeKind.WILDCARD
+    override fun getSuperBound() = _superBound
+    override fun getExtendsBound() = _extendsBound
+}
+
+class JeIntersectionType(override val psi: PsiIntersectionType) : JeAbstractType(), IntersectionType {
     override fun getKind() = TypeKind.INTERSECTION
     override fun getBounds() = psi.superTypes.map { JeTypeMirror(it) }
 }
@@ -100,7 +135,14 @@ class JeDeclaredType(override val psi: PsiClassType) : JeAbstractType(), Declare
     }
 }
 
-private class JePrimitiveType(override val psi: PsiPrimitiveType) : JeAbstractType(), PrimitiveType {
+class JeCompoundDeclaredType(val baseType: TypeElement, val typeArgs: List<TypeMirror>) : JeTypeBase(), DeclaredType {
+    override fun getKind() = TypeKind.DECLARED
+    override fun getTypeArguments() = typeArgs
+    override fun asElement() = baseType
+    override fun getEnclosingType() = baseType.asType()
+}
+
+class JePrimitiveType(override val psi: PsiPrimitiveType) : JeAbstractType(), PrimitiveType {
     override fun getKind() = when (psi) {
         PsiType.BYTE -> TypeKind.BYTE
         PsiType.CHAR -> TypeKind.CHAR
@@ -137,6 +179,10 @@ object JePackageTypeMirror : JeTypeBase(), NoType {
 object JeNoneType : JeTypeBase(), NoType {
     override fun getKind() = TypeKind.NONE
     override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitNoType(this, p)
+}
+
+class CustomJeNoneType(private val _kind: TypeKind) : JeTypeBase(), NoType {
+    override fun getKind() = _kind
 }
 
 object JeErrorType : JeTypeBase(), NoType {

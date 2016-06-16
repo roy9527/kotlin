@@ -17,7 +17,10 @@
 package org.jetbrains.kotlin.annotation.processing
 
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiSuperMethodUtil
+import com.intellij.psi.util.PsiTypesUtil
 import com.sun.tools.javac.util.Constants
 import org.jetbrains.kotlin.java.model.*
 import org.jetbrains.kotlin.java.model.impl.JeAnnotationMirror
@@ -29,25 +32,42 @@ import javax.lang.model.element.*
 import javax.lang.model.util.Elements
 
 class KotlinElements(val javaPsiFacade: JavaPsiFacade, val scope: GlobalSearchScope) : Elements {
-    override fun hides(hider: Element?, hidden: Element?): Boolean {
-        throw UnsupportedOperationException()
+    override fun hides(hider: Element, hidden: Element): Boolean {
+        val hiderMethod = (hider as? JeExecutableElement)?.psi ?: return false
+        val hiddenMethod = (hidden as? JeExecutableElement)?.psi ?: return false
+        
+        if (hiderMethod.name != hiddenMethod.name) return false
+        if (hiderMethod.parameterList.parametersCount != hiddenMethod.parameterList.parametersCount) return false
+        
+        val hiderMethodClass = hiderMethod.containingClass ?: return false
+        val hiddenMethodClass = hiddenMethod.containingClass ?: return false
+        
+        if (PsiTypesUtil.getClassType(hiddenMethodClass) !in hiderMethodClass.superTypes) return false
+
+        if (hiderMethod.returnType != hiddenMethod.returnType) return false
+        for (i in 0..hiderMethod.parameterList.parametersCount - 1) {
+            if (hiderMethod.parameterList.parameters[i].type != hiddenMethod.parameterList.parameters[i].type) return false
+        }
+        
+        return true
     }
 
-    override fun overrides(overrider: ExecutableElement?, overridden: ExecutableElement?, type: TypeElement?): Boolean {
-        val jeOverrider = overrider as? JeExecutableElement ?: return false
-        val jeOverridden = overridden as? JeExecutableElement ?: return false
+    override fun overrides(overrider: ExecutableElement, overridden: ExecutableElement, type: TypeElement): Boolean {
+        overrider as? JeExecutableElement ?: return false
+        overridden as? JeExecutableElement ?: return false
+        if (type == null) return false
         
-        
+        return PsiSuperMethodUtil.isSuperMethod(overrider.psi, overridden.psi)
     }
 
     override fun getName(cs: CharSequence?) = JeName(cs?.toString())
 
-    override fun getElementValuesWithDefaults(a: AnnotationMirror?): Map<out ExecutableElement, AnnotationValue> {
-        val jeAnnotation = a as? JeAnnotationMirror ?: return emptyMap()
-        return jeAnnotation.getAllElementValues()
+    override fun getElementValuesWithDefaults(a: AnnotationMirror): Map<out ExecutableElement, AnnotationValue> {
+        a as? JeAnnotationMirror ?: return emptyMap()
+        return a.getAllElementValues()
     }
 
-    override fun getBinaryName(type: TypeElement?) = JeName((type as JeTypeElement).psi.qualifiedName)
+    override fun getBinaryName(type: TypeElement) = JeName((type as JeTypeElement).psi.qualifiedName)
 
     override fun getDocComment(e: Element?) = ""
 
@@ -55,10 +75,7 @@ class KotlinElements(val javaPsiFacade: JavaPsiFacade, val scope: GlobalSearchSc
         return (e as? JeAnnotationOwner)?.annotationOwner?.findAnnotation("java.lang.Deprecated") != null
     }
 
-    override fun getAllMembers(type: TypeElement?): List<Element> {
-        val jeTypeElement = type as? JeTypeElement ?: return emptyList()
-        return jeTypeElement.getAllMembers();
-    }
+    override fun getAllMembers(type: TypeElement) = (type as? JeTypeElement)?.getAllMembers() ?: emptyList()
 
     override fun printElements(w: Writer, vararg elements: Element) {
         val printWriter = PrintWriter(w)
@@ -85,7 +102,28 @@ class KotlinElements(val javaPsiFacade: JavaPsiFacade, val scope: GlobalSearchSc
         return getPackageOf(parent)
     }
 
-    override fun getAllAnnotationMirrors(e: Element?): List<AnnotationMirror> {
-        throw UnsupportedOperationException()
+    override fun getAllAnnotationMirrors(e: Element): List<AnnotationMirror> {
+        val annotations = (e as? JeElement)?.annotationMirrors?.toMutableList() ?: return emptyList()
+        
+        if (e is JeTypeElement) {
+            var parent = e.psi.superClass
+            while (parent != null) {
+                val parentAnnotations = parent.modifierList?.annotations
+                if (parentAnnotations == null) {
+                    parent = parent.superClass
+                    continue
+                }
+                
+                for (parentAnnotation in parentAnnotations) {
+                    val annotationClass = parentAnnotation.nameReferenceElement?.resolve() as? PsiClass ?: continue
+                    annotationClass.modifierList?.findAnnotation("java.lang.annotation.Inherited") ?: continue
+                    annotations += JeAnnotationMirror(parentAnnotation)
+                }
+                
+                parent = parent.superClass
+            }
+        }
+        
+        return annotations
     }
 }

@@ -23,19 +23,24 @@ import javax.tools.JavaFileManager
 import javax.tools.JavaFileObject
 
 class KotlinFiler : Filer {
-    override fun createSourceFile(name: CharSequence?, vararg originatingElements: Element?): JavaFileObject? {
+    override fun createSourceFile(name: CharSequence, vararg originatingElements: Element?): JavaFileObject? {
         throw UnsupportedOperationException()
     }
 
-    override fun getResource(location: JavaFileManager.Location?, pkg: CharSequence?, relativeName: CharSequence?): FileObject? {
+    override fun getResource(location: JavaFileManager.Location, pkg: CharSequence, relativeName: CharSequence): FileObject? {
         throw UnsupportedOperationException()
     }
 
-    override fun createResource(location: JavaFileManager.Location?, pkg: CharSequence?, relativeName: CharSequence?, vararg originatingElements: Element?): FileObject? {
+    override fun createResource(
+            location: JavaFileManager.Location?, 
+            pkg: CharSequence, 
+            relativeName: CharSequence, 
+            vararg originatingElements: Element?
+    ): FileObject? {
         throw UnsupportedOperationException()
     }
 
-    override fun createClassFile(name: CharSequence?, vararg originatingElements: Element?): JavaFileObject? {
+    override fun createClassFile(name: CharSequence, vararg originatingElements: Element?): JavaFileObject? {
         throw UnsupportedOperationException()
     }
 }

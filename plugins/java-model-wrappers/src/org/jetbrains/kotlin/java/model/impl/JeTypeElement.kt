@@ -36,7 +36,7 @@ class JeTypeElement(override val psi: PsiClass) : JeElement(), TypeElement, JeAn
 
     override fun getQualifiedName() = JeName(psi.qualifiedName)
 
-    override fun getSuperclass(): TypeMirror? {
+    override fun getSuperclass(): TypeMirror {
         val superClass = psi.superClass ?: return JeNoneType
         return JeTypeMirror(PsiTypesUtil.getClassType(superClass))
     }

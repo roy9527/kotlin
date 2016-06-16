@@ -23,16 +23,15 @@ import javax.lang.model.element.Element
 import javax.tools.Diagnostic
 
 class KotlinMessager : Messager {
-    override fun printMessage(kind: Diagnostic.Kind, msg: CharSequence?) = printMessage(kind, msg, null)
+    override fun printMessage(kind: Diagnostic.Kind, msg: CharSequence) = printMessage(kind, msg, null)
 
-    override fun printMessage(kind: Diagnostic.Kind, msg: CharSequence?, e: Element?) = printMessage(kind, msg, e, null)
+    override fun printMessage(kind: Diagnostic.Kind, msg: CharSequence, e: Element?) = printMessage(kind, msg, e, null)
 
-    override fun printMessage(kind: Diagnostic.Kind, msg: CharSequence?, e: Element?, a: AnnotationMirror?) {
+    override fun printMessage(kind: Diagnostic.Kind, msg: CharSequence, e: Element?, a: AnnotationMirror?) {
         printMessage(kind, msg, e, a, null)
     }
 
-    override fun printMessage(kind: Diagnostic.Kind, msg: CharSequence?, e: Element?, a: AnnotationMirror?, v: AnnotationValue?) {
-        if (msg == null) return
+    override fun printMessage(kind: Diagnostic.Kind, msg: CharSequence, e: Element?, a: AnnotationMirror?, v: AnnotationValue?) {
         println(msg)
     }
 }

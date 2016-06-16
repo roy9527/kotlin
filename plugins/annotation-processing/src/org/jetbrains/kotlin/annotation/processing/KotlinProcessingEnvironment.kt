@@ -30,16 +30,10 @@ class KotlinProcessingEnvironment(
     private val options = Collections.unmodifiableMap(options) 
     
     override fun getElementUtils() = elements
-
     override fun getTypeUtils() = types
-
     override fun getMessager() = messager
-
     override fun getLocale() = Locale.getDefault()
-
     override fun getSourceVersion() = SourceVersion.RELEASE_6
-
     override fun getOptions() = options
-
     override fun getFiler() = filer
 }

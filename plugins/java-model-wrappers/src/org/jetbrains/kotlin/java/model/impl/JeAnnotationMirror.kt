@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.java.model.impl
 
 import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiAnnotationMethod
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTypesUtil
 import javax.lang.model.element.AnnotationMirror
@@ -31,10 +32,28 @@ class JeAnnotationMirror(val psi: PsiAnnotation) : AnnotationMirror {
     }
 
     override fun getElementValues(): Map<out ExecutableElement, AnnotationValue> {
-        throw UnsupportedOperationException()
+        val annotationClass = psi.nameReferenceElement?.resolve() as? PsiClass ?: return emptyMap()
+        
+        return mutableMapOf<ExecutableElement, AnnotationValue>().apply {
+            for (attribute in psi.parameterList.attributes) {
+                val attributeValue = attribute.value ?: continue
+                val method = annotationClass.methods.firstOrNull {
+                    it is PsiAnnotationMethod && it.name == attribute.name 
+                } ?: return emptyMap()
+                put(JeExecutableElement(method), JeAnnotationValue(attributeValue))
+            }
+        }
     }
     
     fun getAllElementValues(): Map<out ExecutableElement, AnnotationValue> {
-        throw UnsupportedOperationException()   
+        val annotationClass = psi.nameReferenceElement?.resolve() as? PsiClass ?: return emptyMap()
+
+        return mutableMapOf<ExecutableElement, AnnotationValue>().apply {
+            for (method in annotationClass.methods) {
+                method as? PsiAnnotationMethod ?: continue
+                val attributeValue = psi.findAttributeValue(method.name) ?: method.defaultValue ?: continue
+                put(JeExecutableElement(method), JeAnnotationValue(attributeValue))
+            }
+        }   
     }
 }
