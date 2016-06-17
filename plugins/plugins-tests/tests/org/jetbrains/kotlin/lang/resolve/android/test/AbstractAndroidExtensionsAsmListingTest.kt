@@ -26,7 +26,7 @@ import java.io.File
 open class AbstractAndroidExtensionsAsmListingTest : AbstractBytecodeTextTest() {
     private fun createAndroidAPIEnvironment(path: String) {
         return createEnvironmentForConfiguration(
-                KotlinTestUtils.compilerConfigurationForTests(ConfigurationKind.ALL, TestJdkKind.ANDROID_API), path)
+                KotlinTestUtils.newConfiguration(ConfigurationKind.ALL, TestJdkKind.ANDROID_API), path)
     }
 
     private fun createEnvironmentForConfiguration(configuration: CompilerConfiguration, path: String) {
