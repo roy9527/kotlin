@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.CompilerConfigurationKey
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisCompletedHandlerExtension
 import java.io.File
+import java.net.URLClassLoader
 
 object AnnotationProcessingConfigurationKeys {
     val GENERATED_OUTPUT_DIR: CompilerConfigurationKey<String> =
@@ -70,6 +71,10 @@ class AnnotationProcessingComponentRegistrar : ComponentRegistrar {
         val generatedOutputDir = configuration.get(AnnotationProcessingConfigurationKeys.GENERATED_OUTPUT_DIR) ?: return
         val classpath = configuration.get(AnnotationProcessingConfigurationKeys.ANNOTATION_PROCESSOR_CLASSPATH) ?: return
 
+        val classLoader = URLClassLoader(classpath.map { File(it).toURI().toURL() }.toTypedArray())
+        val configurationService = AnnotationProcessingConfigurationService(classLoader)
+        project.registerService(AnnotationProcessingConfigurationService::class.java, configurationService)
+        
         val generatedOutputDirFile = File(generatedOutputDir)
         generatedOutputDirFile.mkdirs()
         

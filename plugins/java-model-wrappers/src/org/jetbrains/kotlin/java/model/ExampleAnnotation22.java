@@ -18,14 +18,155 @@ package org.jetbrains.kotlin.java.model;
 
 import java.lang.annotation.Annotation;
 
+enum Color {
+    RED, GREEN, BLUE
+}
+
 @interface MyAnno {
-    int[] value() default { 0 };
+    byte byteValue();
+    short shortValue();
+    int intValue();
+    char charValue();
+    boolean booleanValue();
+    boolean booleanTrueValue();
+    long longValue();
+    float floatValue();
+    double doubleValue();
+    
+    String stringValue();
+    String nullStringValue();
+    
+    byte[] byteArrayValue();
+    short[] shortArrayValue();
+    int[] intArrayValue();
+    char[] charArrayValue();
+    boolean[] booleanArrayValue();
+    long[] longArrayValue();
+    float[] floatArrayValue();
+    double[] doubleArrayValue();
+    
+    String[] stringArrayType();
+    Color[] enumValues();
+    
+    Color enumValue();
+    
+    Class<?> implClassValue();
 }
 
 class MyAnnoImpl implements MyAnno {
     @Override
-    public int[] value() {
-        return new int[0];
+    public byte byteValue() {
+        return -128;
+    }
+
+    @Override
+    public short shortValue() {
+        return 1000;
+    }
+
+    @Override
+    public int intValue() {
+        return 1000;
+    }
+
+    @Override
+    public char charValue() {
+        return '~';
+    }
+
+    @Override
+    public boolean booleanValue() {
+        return false;
+    }
+
+    @Override
+    public boolean booleanTrueValue() {
+        return true;
+    }
+
+    @Override
+    public long longValue() {
+        return 1000L;
+    }
+
+    @Override
+    public float floatValue() {
+        return 5.0f;
+    }
+
+    @Override
+    public double doubleValue() {
+        return 6.0d;
+    }
+
+    @Override
+    public String stringValue() {
+        return "ABC";
+    }
+
+    @Override
+    public String nullStringValue() {
+        return null;
+    }
+    
+    @Override
+    public byte[] byteArrayValue() {
+        return new byte[] { -100, -110, -120 };
+    }
+
+    @Override
+    public short[] shortArrayValue() {
+        return new short[] { 1000, 2000, 3000 };
+    }
+
+    @Override
+    public int[] intArrayValue() {
+        return new int[] { 1000, 2000, 3000 };
+    }
+
+    @Override
+    public char[] charArrayValue() {
+        return new char[] { 'A', 'B', 'C' };
+    }
+
+    @Override
+    public boolean[] booleanArrayValue() {
+        return new boolean[] { true, false, false };
+    }
+
+    @Override
+    public long[] longArrayValue() {
+        return new long[] { 500, 600, 700 };
+    }
+
+    @Override
+    public float[] floatArrayValue() {
+        return new float[] { 500, 600, 700 };
+    }
+
+    @Override
+    public double[] doubleArrayValue() {
+        return new double[] { 500, 600, 700 };
+    }
+
+    @Override
+    public Color enumValue() {
+        return Color.RED;
+    }
+
+    @Override
+    public Class<?> implClassValue() {
+        return Color.class;
+    }
+
+    @Override
+    public String[] stringArrayType() {
+        return new String[] { "ABC", "CDE", "FDSD" };
+    }
+
+    @Override
+    public Color[] enumValues() {
+        return new Color[] { Color.BLUE, Color.RED };
     }
 
     @Override

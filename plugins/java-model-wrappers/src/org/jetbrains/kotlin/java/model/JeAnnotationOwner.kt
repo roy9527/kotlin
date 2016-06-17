@@ -16,8 +16,10 @@
 
 package org.jetbrains.kotlin.java.model
 
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiAnnotationOwner
 import com.intellij.psi.PsiClass
+import org.jetbrains.kotlin.annotation.processing.AnnotationProcessingConfigurationService
 import org.jetbrains.kotlin.java.model.impl.JeAnnotationMirror
 import org.jetbrains.kotlin.java.model.internal.createAnnotation
 import javax.lang.model.element.AnnotationMirror
@@ -30,14 +32,20 @@ interface JeAnnotationOwner : Element {
     override fun getAnnotationMirrors() = annotationOwner?.annotations?.map { JeAnnotationMirror(it) } ?: emptyList()
     
     override fun <A : Annotation> getAnnotation(annotationType: Class<A>): A? {
-        val annotationFqName = annotationType.canonicalName
-        
-        val annotation = annotationOwner?.annotations
-                ?.firstOrNull { it.qualifiedName == annotationFqName } ?: return null
-        val annotationClass = annotation.nameReferenceElement?.resolve() as? PsiClass ?: return null
-        
-        val classLoader = javaClass.classLoader
-        createAnnotation(annotation, annotationClass, classLoader)
+        try {
+            val annotationFqName = annotationType.canonicalName
+
+            val annotation = annotationOwner?.annotations
+                                     ?.firstOrNull { it.qualifiedName == annotationFqName } ?: return null
+            val annotationClass = annotation.nameReferenceElement?.resolve() as? PsiClass ?: return null
+            
+            val classLoader = ServiceManager.getService(
+                    annotation.project, AnnotationProcessingConfigurationService::class.java).aptClassLoader
+            
+            createAnnotation(annotation, annotationClass, classLoader)
+        } catch (e: Throwable) {
+            val a = 5
+        }
         
         return null
     }
@@ -51,7 +59,9 @@ interface JeAnnotationOwner : Element {
 interface JeNoAnnotations : Element {
     override fun getAnnotationMirrors() = emptyList<AnnotationMirror>()
 
-    override fun <A : Annotation> getAnnotation(annotationType: Class<A>?) = null
+    override fun <A : Annotation> getAnnotation(annotationType: Class<A>?): Nothing? {
+        return null
+    }
 
     @Suppress("UNCHECKED_CAST")
     override fun <A : Annotation?> getAnnotationsByType(annotationType: Class<A>): Array<A> {
