@@ -60,5 +60,5 @@ class Kapt2Subplugin : KotlinGradleSubplugin {
     override val isBundled = true
     override fun getPluginName() = "org.jetbrains.kotlin.kapt2"
     override fun getGroupName() = "org.jetbrains.kotlin"
-    override fun getArtifactName() = "kotlin-android-extensions"
+    override fun getArtifactName() = "kotlin-kapt"
 }

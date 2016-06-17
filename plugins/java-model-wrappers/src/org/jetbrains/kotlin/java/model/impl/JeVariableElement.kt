@@ -17,10 +17,8 @@
 package org.jetbrains.kotlin.java.model.impl
 
 import com.intellij.psi.*
-import org.jetbrains.kotlin.java.model.JeAnnotationOwner
-import org.jetbrains.kotlin.java.model.JeElement
-import org.jetbrains.kotlin.java.model.JeModifierListOwner
-import org.jetbrains.kotlin.java.model.JeName
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.java.model.*
 import javax.lang.model.element.Element
 import javax.lang.model.element.ElementKind
 import javax.lang.model.element.ElementVisitor
@@ -28,6 +26,9 @@ import javax.lang.model.element.VariableElement
 
 class JeVariableElement(override val psi: PsiVariable) : JeElement(), VariableElement, JeModifierListOwner, JeAnnotationOwner {
     override fun getSimpleName() = JeName(psi.name)
+
+    override fun getEnclosingElement() = PsiTreeUtil.getParentOfType(psi, PsiClass::class.java)
+            ?.let { JeConverter.convertClass(it) }
 
     override fun getConstantValue(): Any? {
         val initializer = psi.initializer ?: return null

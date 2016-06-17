@@ -21,14 +21,13 @@ import com.intellij.psi.PsiAnnotationOwner
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiTypesUtil
-import org.jetbrains.kotlin.java.model.JeAnnotationOwner
-import org.jetbrains.kotlin.java.model.JeElement
-import org.jetbrains.kotlin.java.model.JeModifierListOwner
-import org.jetbrains.kotlin.java.model.JeName
+import org.jetbrains.kotlin.java.model.*
 import javax.lang.model.element.*
 import javax.lang.model.type.TypeMirror
 
 class JeExecutableElement(override val psi: PsiMethod) : JeElement(), ExecutableElement, JeModifierListOwner, JeAnnotationOwner {
+    override fun getEnclosingElement() = psi.containingClass?.let { JeConverter.convertClass(it) }
+
     override fun getSimpleName(): JeName {
         if (psi.isConstructor) return JeName.INIT
         return JeName(psi.name)
@@ -48,24 +47,8 @@ class JeExecutableElement(override val psi: PsiMethod) : JeElement(), Executable
 
     override fun getReturnType() = psi.returnType?.let { JeTypeMirror(it) } ?: JeNoneType
 
-    override fun getReceiverType(): TypeMirror {
-        if (psi.hasModifierProperty(PsiModifier.STATIC)) return JeNoneType
-        
-        if (psi.isConstructor) {
-            val containingClass = psi.containingClass
-            if (containingClass != null) {
-                containingClass.containingClass?.let { 
-                    return JeTypeMirror(PsiTypesUtil.getClassType(it)) 
-                }
-            }
-            
-            return JeNoneType
-        }
-        
-        val containingClass = psi.containingClass ?: return JeNoneType
-        return JeTypeMirror(PsiTypesUtil.getClassType(containingClass))
-    }
-
+    override fun getReceiverType() = psi.getReceiverTypeMirror()
+    
     override fun isVarArgs() = psi.isVarArgs
 
     override fun isDefault() = psi.hasModifierProperty(PsiModifier.DEFAULT)
@@ -83,4 +66,23 @@ class JeExecutableElement(override val psi: PsiMethod) : JeElement(), Executable
 
     override val annotationOwner: PsiAnnotationOwner?
         get() = psi.modifierList
+}
+
+fun PsiMethod.getReceiverTypeMirror(): TypeMirror {
+    if (hasModifierProperty(PsiModifier.STATIC)) return JeNoneType
+
+    if (isConstructor) {
+        val containingClass = containingClass
+        if (containingClass != null) {
+            containingClass.containingClass?.let {
+                return JeTypeMirror(PsiTypesUtil.getClassType(it))
+            }
+        }
+
+        return JeNoneType
+    }
+
+    val containingClass = containingClass ?: return JeNoneType
+    return JeTypeMirror(PsiTypesUtil.getClassType(containingClass))
+
 }

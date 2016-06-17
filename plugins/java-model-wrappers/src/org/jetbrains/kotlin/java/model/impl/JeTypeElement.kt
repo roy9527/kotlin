@@ -16,19 +16,21 @@
 
 package org.jetbrains.kotlin.java.model.impl
 
-import com.intellij.psi.PsiAnnotationOwner
-import com.intellij.psi.PsiAnonymousClass
-import com.intellij.psi.PsiClass
+import com.intellij.psi.*
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.PsiTypesUtil
-import org.jetbrains.kotlin.java.model.JeAnnotationOwner
-import org.jetbrains.kotlin.java.model.JeElement
-import org.jetbrains.kotlin.java.model.JeModifierListOwner
-import org.jetbrains.kotlin.java.model.JeName
+import org.jetbrains.kotlin.java.model.*
 import javax.lang.model.element.*
 import javax.lang.model.type.TypeMirror
 
 class JeTypeElement(override val psi: PsiClass) : JeElement(), TypeElement, JeAnnotationOwner, JeModifierListOwner {
+    override fun getEnclosingElement(): Element? {
+        psi.containingClass?.let { return JeConverter.convertClass(it) }
+        val javaFile = psi.containingFile as? PsiJavaFile ?: return null
+        return JavaPsiFacade.getInstance(psi.project).findPackage(javaFile.packageName)
+                ?.let { JeConverter.convertPackage(it) }
+    }
+    
     override val annotationOwner: PsiAnnotationOwner?
         get() = psi.modifierList
 

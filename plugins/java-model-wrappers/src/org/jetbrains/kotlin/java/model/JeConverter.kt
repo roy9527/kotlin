@@ -18,7 +18,6 @@ package org.jetbrains.kotlin.java.model
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.java.model.impl.*
-import javax.lang.model.element.Element
 
 object JeConverter {
     fun convert(psi: PsiElement?) = when (psi) {
@@ -34,11 +33,4 @@ object JeConverter {
     fun convertPackage(psiPackage: PsiPackage) = JePackageElement(psiPackage)
     
     fun convertClass(psiClass: PsiClass) = JeTypeElement(psiClass)
-    
-    tailrec fun convertAppropriateParent(psi: PsiElement?): Element? {
-        val parent = psi?.parent ?: return null
-        val convertResult = convert(parent)
-        if (convertResult != null) return convertResult
-        return convertAppropriateParent(parent)
-    }
 }

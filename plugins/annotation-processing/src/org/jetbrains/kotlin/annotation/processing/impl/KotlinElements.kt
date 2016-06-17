@@ -21,7 +21,6 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiSuperMethodUtil
 import com.intellij.psi.util.PsiTypesUtil
-import com.sun.tools.javac.util.Constants
 import org.jetbrains.kotlin.java.model.*
 import org.jetbrains.kotlin.java.model.impl.JeAnnotationMirror
 import org.jetbrains.kotlin.java.model.impl.JeExecutableElement
@@ -125,4 +124,76 @@ class KotlinElements(val javaPsiFacade: JavaPsiFacade, val scope: GlobalSearchSc
         
         return annotations
     }
+
+    override fun isFunctionalInterface(type: TypeElement): Boolean {
+        val jeTypeElement = type as? JeTypeElement ?: return false
+        if (!jeTypeElement.psi.isInterface) return false
+        if (jeTypeElement.psi.allMethods.size != 1) return false
+        return true
+    }
+}
+
+object Constants {
+    fun format(value: Any?): String {
+        return when (value) {
+            is Byte -> formatByte((value as Byte?)!!)
+            is Short -> formatShort((value as Short?)!!)
+            is Long -> formatLong((value as Long?)!!)
+            is Float -> formatFloat((value as Float?)!!)
+            is Double -> formatDouble((value as Double?)!!)
+            is Char -> formatChar(value)
+            is String -> formatString(value)
+            is Int, is Boolean -> value.toString()
+            else -> throw IllegalArgumentException(
+                    "Argument is not a primitive type or a string; it " +
+                    (if (value == null) "is a null value." else "has class " + value.javaClass.name) + ".")
+        }
+    }
+
+    private fun formatByte(b: Byte) = String.format("(byte)0x%02x", b)
+    private fun formatShort(s: Short) = String.format("(short)%d", s)
+    private fun formatLong(lng: Long) = "${lng}L"
+    private fun formatChar(c: Char) = '\'' + quote(c) + '\''
+    private fun formatString(s: String) = '"' + quote(s) + '"'
+    
+    private fun formatFloat(f: Float): String {
+        if (java.lang.Float.isNaN(f))
+            return "0.0f/0.0f"
+        else if (java.lang.Float.isInfinite(f))
+            return if (f < 0) "-1.0f/0.0f" else "1.0f/0.0f"
+        else
+            return "${f}f"
+    }
+
+    private fun formatDouble(d: Double): String {
+        if (java.lang.Double.isNaN(d))
+            return "0.0/0.0"
+        else if (java.lang.Double.isInfinite(d))
+            return if (d < 0) "-1.0/0.0" else "1.0/0.0"
+        else
+            return d.toString()
+    }
+
+    fun quote(ch: Char): String {
+        return when (ch) {
+            '\b' -> "\\b"
+            '\n' -> "\\n"
+            '\r' -> "\\r"
+            '\t' -> "\\t"
+            '\'' -> "\\'"
+            '\"' -> "\\\""
+            '\\' -> "\\\\"
+            else -> if (isPrintableAscii(ch)) ch.toString() else String.format("\\u%04x", ch.toInt())
+        }
+    }
+
+    fun quote(s: String): String {
+        val buf = StringBuilder()
+        for (i in 0..s.length - 1) {
+            buf.append(quote(s[i]))
+        }
+        return buf.toString()
+    }
+
+    private fun isPrintableAscii(ch: Char) = ch >= ' ' && ch <= '~'
 }

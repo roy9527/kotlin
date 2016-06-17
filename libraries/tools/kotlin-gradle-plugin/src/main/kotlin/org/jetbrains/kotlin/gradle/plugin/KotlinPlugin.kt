@@ -305,6 +305,8 @@ open class KotlinAndroidPlugin @Inject constructor(val scriptHandler: ScriptHand
                 aptConfigurations.put(sourceSet.name,
                         project.createAptConfiguration(sourceSet.name, kotlinAnnotationProcessingDep))
 
+                project.createKapt2Configuration(sourceSet.name)
+
                 /*TODO: before 0.11 gradle android plugin there was:
                   sourceSet.getAllJava().source(kotlinDirSet)
                   sourceSet.getAllSource().source(kotlinDirSet)

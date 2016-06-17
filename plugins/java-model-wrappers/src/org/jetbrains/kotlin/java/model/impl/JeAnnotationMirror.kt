@@ -28,7 +28,7 @@ import javax.lang.model.type.DeclaredType
 class JeAnnotationMirror(val psi: PsiAnnotation) : AnnotationMirror {
     override fun getAnnotationType(): DeclaredType? {
         val psiClass = psi.reference?.resolve() as? PsiClass ?: return JeDeclaredErrorType
-        return JeDeclaredType(PsiTypesUtil.getClassType(psiClass))
+        return JeDeclaredType(PsiTypesUtil.getClassType(psiClass), psiClass)
     }
 
     override fun getElementValues(): Map<out ExecutableElement, AnnotationValue> {

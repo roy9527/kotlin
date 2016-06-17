@@ -43,7 +43,8 @@ class AnnotationProcessingCommandLineProcessor : CommandLineProcessor {
                 CliOption("generated", "<path>", "Output path for generated files", required = false)
 
         val ANNOTATION_PROCESSOR_CLASSPATH_OPTION: CliOption =
-                CliOption("apclasspath", "<classpath>", "Annotation processor classpath", required = false)
+                CliOption("apclasspath", "<classpath>", "Annotation processor classpath", 
+                          required = false, allowMultipleOccurrences = true)
     }
 
     override val pluginId: String = ANNOTATION_PROCESSING_COMPILER_PLUGIN_ID

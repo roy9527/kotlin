@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package org.jetbrains.kotlin.java.model
+package org.jetbrains.kotlin.java.model;
 
-import com.intellij.psi.PsiElement
-import javax.lang.model.element.Element
+import java.lang.annotation.Annotation;
 
-abstract class JeElement : Element {
-    abstract val psi: PsiElement
+@interface MyAnno {
+    int[] value() default { 0 };
 }
 
-annotation class ExampleAnnotation
+class MyAnnoImpl implements MyAnno {
+    @Override
+    public int[] value() {
+        return new int[0];
+    }
 
-annotation class ExampleAnnotation2(val a: String = "A", val b: IntArray)
+    @Override
+    public Class<? extends Annotation> annotationType() {
+        return MyAnno.class;
+    }
+}

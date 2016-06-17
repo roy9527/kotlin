@@ -19,7 +19,6 @@ package org.jetbrains.kotlin.java.model.impl
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import javax.lang.model.element.AnnotationMirror
-import javax.lang.model.element.Element
 import javax.lang.model.element.TypeElement
 import javax.lang.model.type.*
 import java.lang.reflect.Array as RArray
@@ -33,8 +32,6 @@ abstract class JeTypeBase : TypeMirror {
     override fun <A : Annotation?> getAnnotationsByType(annotationType: Class<A>): Array<A> {
         return RArray.newInstance(annotationType, 0) as Array<A>
     }
-
-    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visit(this, p)
 }
 
 abstract class JeAbstractType : JeTypeBase() {
@@ -99,6 +96,7 @@ fun JeTypeMirror(psi: PsiType): TypeMirror = when (psi) {
 
 class JeTypeVariableType(override val psi: PsiClassType, val parameter: PsiTypeParameter) : JeAbstractType(), TypeVariable {
     override fun getKind() = TypeKind.TYPEVAR
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitTypeVariable(this, p)
 
     override fun getLowerBound(): TypeMirror? {
         TODO()
@@ -112,39 +110,46 @@ class JeTypeVariableType(override val psi: PsiClassType, val parameter: PsiTypeP
 }
 
 object JeNullType : JeAbstractType(), NullType {
-    override val psi = PsiType.NULL
     override fun getKind() = TypeKind.NULL
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitNull(this, p)
+    override val psi = PsiType.NULL
 }
 
 class JeArrayType(override val psi: PsiArrayType) : JeAbstractType(), ArrayType {
     override fun getKind() = TypeKind.ARRAY
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitArray(this, p)
     override fun getComponentType() = JeTypeMirror(psi.componentType)
 }
 
 class JeArrayTypeWithComponent(private val _componentType: TypeMirror?) : JeTypeBase(), ArrayType {
     override fun getKind() = TypeKind.ARRAY
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitArray(this, p)
     override fun getComponentType() = _componentType
 }
 
 class JeWildcardType(override val psi: PsiWildcardType) : JeAbstractType(), WildcardType {
     override fun getKind() = TypeKind.WILDCARD
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitWildcard(this, p)
     override fun getSuperBound() = JeTypeMirror(psi.superBound)
     override fun getExtendsBound() = JeTypeMirror(psi.extendsBound)
 }
 
 class JeWildcardTypeWithBounds(private val _extendsBound: TypeMirror, private val _superBound: TypeMirror) : JeTypeBase(), WildcardType {
     override fun getKind() = TypeKind.WILDCARD
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitWildcard(this, p)
     override fun getSuperBound() = _superBound
     override fun getExtendsBound() = _extendsBound
 }
 
 class JeIntersectionType(override val psi: PsiIntersectionType) : JeAbstractType(), IntersectionType {
     override fun getKind() = TypeKind.INTERSECTION
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitIntersection(this, p)
     override fun getBounds() = psi.superTypes.map { JeTypeMirror(it) }
 }
 
 class JeDeclaredType(override val psi: PsiClassType, val clazz: PsiClass) : JeAbstractType(), DeclaredType {
     override fun getKind() = TypeKind.DECLARED
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitDeclared(this, p)
     
     override fun getTypeArguments() = psi.parameters.map { JeTypeMirror(it) }
 
@@ -158,12 +163,16 @@ class JeDeclaredType(override val psi: PsiClassType, val clazz: PsiClass) : JeAb
 
 class JeCompoundDeclaredType(val baseType: TypeElement, val typeArgs: List<TypeMirror>) : JeTypeBase(), DeclaredType {
     override fun getKind() = TypeKind.DECLARED
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitDeclared(this, p)
+    
     override fun getTypeArguments() = typeArgs
     override fun asElement() = baseType
     override fun getEnclosingType() = baseType.asType()
 }
 
 class JePrimitiveType(override val psi: PsiPrimitiveType) : JeAbstractType(), PrimitiveType {
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitPrimitive(this, p)
+    
     override fun getKind() = when (psi) {
         PsiType.BYTE -> TypeKind.BYTE
         PsiType.CHAR -> TypeKind.CHAR
@@ -178,9 +187,32 @@ class JePrimitiveType(override val psi: PsiPrimitiveType) : JeAbstractType(), Pr
     }
 }
 
-class JeExecutableTypeMirror(val psi: PsiMember) : JeTypeBase(), TypeMirror {
+class JeExecutableTypeMirror(val psi: PsiMember) : JeTypeBase(), ExecutableType {
     override fun getKind() = TypeKind.EXECUTABLE
-    
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitExecutable(this, p)
+
+    override fun getReturnType() = when (psi) {
+        is PsiMethod -> psi.returnType?.let { JeTypeMirror(it) } ?: CustomJeNoneType(TypeKind.VOID)
+        else -> CustomJeNoneType(TypeKind.VOID)
+    }
+
+    override fun getReceiverType() = (psi as? PsiMethod)?.getReceiverTypeMirror() ?: JeNoneType
+
+    override fun getThrownTypes() = when (psi) {
+        is PsiMethod -> psi.throwsList.referencedTypes.map { JeTypeMirror(it) }
+        else -> emptyList()
+    }
+
+    override fun getParameterTypes() = when (psi) {
+        is PsiMethod -> psi.parameterList.parameters.map { JeTypeMirror(it.type) }
+        else -> emptyList()
+    }
+
+    override fun getTypeVariables() = when (psi) {
+        is PsiMethod -> psi.typeParameters.map { JeTypeVariableType(PsiTypesUtil.getClassType(it), it) }
+        else -> emptyList()
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other?.javaClass != javaClass) return false
@@ -204,15 +236,18 @@ object JeNoneType : JeTypeBase(), NoType {
 
 class CustomJeNoneType(private val _kind: TypeKind) : JeTypeBase(), NoType {
     override fun getKind() = _kind
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitNoType(this, p)
 }
 
 object JeErrorType : JeTypeBase(), NoType {
     override fun getKind() = TypeKind.ERROR
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitNoType(this, p)
 }
 
 object JeDeclaredErrorType : JeTypeBase(), DeclaredType, NoType {
     override fun getKind() = TypeKind.ERROR
-
+    override fun <R : Any?, P : Any?> accept(v: TypeVisitor<R, P>, p: P) = v.visitNoType(this, p)
+    
     override fun getTypeArguments() = emptyList<TypeMirror>()
     override fun asElement() = null
     override fun getEnclosingType() = JeNoneType

@@ -18,6 +18,8 @@ package org.jetbrains.kotlin.java.model
 
 import com.intellij.psi.PsiAnnotationOwner
 import org.jetbrains.kotlin.java.model.impl.JeAnnotationMirror
+import org.jetbrains.org.objectweb.asm.*
+import org.jetbrains.org.objectweb.asm.Opcodes.*
 import javax.lang.model.element.AnnotationMirror
 import javax.lang.model.element.Element
 import java.lang.reflect.Array as RArray
@@ -27,7 +29,21 @@ interface JeAnnotationOwner : Element {
     
     override fun getAnnotationMirrors() = annotationOwner?.annotations?.map { JeAnnotationMirror(it) } ?: emptyList()
     
-    override fun <A : Annotation> getAnnotation(annotationType: Class<A>?) = null
+    override fun <A : Annotation> getAnnotation(annotationType: Class<A>): A? {
+        val annotationFqName = annotationType.canonicalName
+        val annotation = annotationOwner?.annotations
+                ?.firstOrNull { it.qualifiedName == annotationFqName } ?: return null
+
+        val bytes = with (ClassWriter(0)) {
+            visit(49, ACC_PUBLIC, annotationFqName,
+                  null, null, arrayOf("java/lang/annotation/Annotation"))
+            visitSource(null, null)
+            visitEnd()
+            toByteArray()
+        }
+        
+        return null
+    }
     
     @Suppress("UNCHECKED_CAST")
     override fun <A : Annotation?> getAnnotationsByType(annotationType: Class<A>): Array<A> {

@@ -34,6 +34,8 @@ class JeTypeParameterElement(
 ) : JeElement(), TypeParameterElement, JeAnnotationOwner, JeModifierListOwner {
     override fun getSimpleName() = JeName(psi.name)
 
+    override fun getEnclosingElement() = parent
+
     override fun getKind() = ElementKind.TYPE_PARAMETER
 
     override fun asType() = JeTypeMirror(PsiTypesUtil.getClassType(psi))
