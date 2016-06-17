@@ -34,30 +34,6 @@
 
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
-
-                <executions>
-                    <execution>
-                        <id>copy-sources</id>
-                        <phase>process-sources</phase>
-                        <configuration>
-                            <target>
-                                <delete dir="${basedir}/target/test" failonerror="false"/>
-                                <copy todir="${basedir}/target/test">
-                                    <fileset dir="${basedir}/../test"/>
-                                </copy>
-                            </target>
-                        </configuration>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
                 <version>${project.version}</version>
@@ -94,11 +70,23 @@
                         <configuration>
                             <sourceDirs>
                                 <sourceDir>${basedir}/test</sourceDir>
-                                <sourceDir>${basedir}/target/test</sourceDir>
+                                <sourceDir>${basedir}/../jdk7/test</sourceDir>
+                                <sourceDir>${basedir}/../test</sourceDir>
                             </sourceDirs>
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <forkMode>once</forkMode>
+                    <jvm>${env.JDK_18}/bin/java</jvm>
+                    <additionalClasspathElements>
+                        <additionalClasspathElement>${basedir}/../target/test-classes</additionalClasspathElement>
+                    </additionalClasspathElements>
+                </configuration>
             </plugin>
         </plugins>
     </build>
