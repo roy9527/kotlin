@@ -17,9 +17,9 @@
 package org.jetbrains.kotlin.java.model
 
 import com.intellij.psi.PsiAnnotationOwner
+import com.intellij.psi.PsiClass
 import org.jetbrains.kotlin.java.model.impl.JeAnnotationMirror
-import org.jetbrains.org.objectweb.asm.*
-import org.jetbrains.org.objectweb.asm.Opcodes.*
+import org.jetbrains.kotlin.java.model.internal.createAnnotation
 import javax.lang.model.element.AnnotationMirror
 import javax.lang.model.element.Element
 import java.lang.reflect.Array as RArray
@@ -31,16 +31,13 @@ interface JeAnnotationOwner : Element {
     
     override fun <A : Annotation> getAnnotation(annotationType: Class<A>): A? {
         val annotationFqName = annotationType.canonicalName
+        
         val annotation = annotationOwner?.annotations
                 ?.firstOrNull { it.qualifiedName == annotationFqName } ?: return null
-
-        val bytes = with (ClassWriter(0)) {
-            visit(49, ACC_PUBLIC, annotationFqName,
-                  null, null, arrayOf("java/lang/annotation/Annotation"))
-            visitSource(null, null)
-            visitEnd()
-            toByteArray()
-        }
+        val annotationClass = annotation.nameReferenceElement?.resolve() as? PsiClass ?: return null
+        
+        val classLoader = javaClass.classLoader
+        createAnnotation(annotation, annotationClass, classLoader)
         
         return null
     }
