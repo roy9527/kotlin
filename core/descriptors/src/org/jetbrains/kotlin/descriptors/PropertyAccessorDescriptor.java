@@ -43,4 +43,6 @@ public interface PropertyAccessorDescriptor extends VariableAccessorDescriptor {
             Kind kind,
             boolean copyOverrides
     );
+
+    boolean isInline();
 }

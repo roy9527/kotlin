@@ -73,7 +73,7 @@ public class DescriptorFactory {
     ) {
         PropertySetterDescriptorImpl setterDescriptor = new PropertySetterDescriptorImpl(
                 propertyDescriptor, annotations, propertyDescriptor.getModality(), visibility, isDefault, isExternal,
-                CallableMemberDescriptor.Kind.DECLARATION, null, sourceElement
+                false, CallableMemberDescriptor.Kind.DECLARATION, null, sourceElement
         );
         setterDescriptor.initializeDefault();
         return setterDescriptor;
@@ -107,7 +107,7 @@ public class DescriptorFactory {
     ) {
         return new PropertyGetterDescriptorImpl(
                 propertyDescriptor, annotations, propertyDescriptor.getModality(), propertyDescriptor.getVisibility(),
-                isDefault, isExternal, CallableMemberDescriptor.Kind.DECLARATION, null, sourceElement
+                isDefault, isExternal, false, CallableMemberDescriptor.Kind.DECLARATION, null, sourceElement
         );
     }
 
