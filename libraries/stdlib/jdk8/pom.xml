@@ -39,7 +39,7 @@
                 <version>${project.version}</version>
 
                  <configuration>
-                     <jdkHome>${env.JDK_18}</jdkHome>
+                     <jdk>${env.JDK_18}</jdk>
                      <args>
                          <arg>-Xallow-kotlin-package</arg>
                      </args>

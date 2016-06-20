@@ -33,24 +33,6 @@
         <testSourceDirectory>test</testSourceDirectory>
 
         <plugins>
-<!--            <plugin>
-                <artifactId>maven-enforcer-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>enforce-versions</id>
-                        <phase>validate</phase>
-                        <goals> <goal>enforce</goal> </goals>
-                        <configuration>
-                            <rules>
-                                <requireJavaVersion>
-                                    <version>1.7</version>
-                                </requireJavaVersion>
-                            </rules>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>-->
-
 
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
@@ -58,7 +40,7 @@
                 <version>${project.version}</version>
 
                  <configuration>
-                     <jdkHome>${env.JDK_17}</jdkHome>
+                     <jdk>${env.JDK_17}</jdk>
                      <args>
                          <arg>-Xallow-kotlin-package</arg>
                      </args>

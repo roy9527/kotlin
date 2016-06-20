@@ -50,7 +50,7 @@
 
         <kotlin-dist>${project-root}/dist</kotlin-dist>
         <kotlin-sdk>${kotlin-dist}/kotlinc</kotlin-sdk>
-        <kotlin.compiler.jdkHome>${env.JDK_16}</kotlin.compiler.jdkHome>
+        <kotlin.compiler.jdk>${env.JDK_16}</kotlin.compiler.jdk>
 
         <maven.compiler.source>1.6</maven.compiler.source>
         <maven.compiler.target>1.6</maven.compiler.target>
